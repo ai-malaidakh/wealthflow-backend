@@ -1,3 +1,7 @@
 target/
 *.class
 *.jar
+
+# Agents
+/.omc/
+/.claude/
