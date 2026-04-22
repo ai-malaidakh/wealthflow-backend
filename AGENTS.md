@@ -138,6 +138,36 @@ src/test/java/com/family/finance/
 
 ---
 
+## 7. Commit Protocol
+
+**Commit after every logical unit of completed work.** Do not batch multiple features into one commit, and do not leave work uncommitted at the end of a session.
+
+### Required format
+
+```
+<type>(<scope>): <description>
+```
+
+**Types:** `feat` · `fix` · `refactor` · `chore` · `test` · `docs` · `perf` · `db`
+
+**Scopes:** `auth` · `sync` · `accounts` · `categories` · `transactions` · `budgets` · `family` · `import` · `security` · `db` · `ci` · `deps`
+
+**Examples:**
+```
+feat(auth): add forgot-password and reset-password endpoints
+feat(db): V13 add email_verification_tokens table
+fix(sync): handle null familyIds in AccountSyncHandler pull query
+fix(security): gate DebugController behind @Profile("dev")
+test(family): assert non-member cannot list family members
+chore(deps): add bucket4j for rate limiting
+```
+
+Breaking changes: append `!` after type/scope and add a `BREAKING CHANGE:` footer.
+
+Full branching and tagging rules: `docs/agents/git-strategy.md`.
+
+---
+
 ## Quick Reference
 
 | Thing | Path |
