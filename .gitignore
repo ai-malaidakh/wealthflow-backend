@@ -5,3 +5,7 @@ target/
 # Agents
 /.omc/
 /.claude/
+
+# macOS
+.DS_Store
+*.pem

@@ -3,7 +3,7 @@
 > **Scope:** Everything in `wealthflow-backend/`. Backend phases of the master plan.
 > **Derived from:** `wealthflow-master-development-plan.md`. If this file and the master plan disagree, the master plan wins.
 > **Orchestration layer:** For tasks spanning both repos, defer to `wealthflow-master/CLAUDE.md`.
-> **Last synced with master plan:** April 20, 2026.
+> **Last synced with master plan:** April 22, 2026.
 
 ---
 
@@ -34,7 +34,7 @@ Do not change these without escalating.
 | Language | Java 17 |
 | Build | Maven (`pom.xml`) |
 | Database | PostgreSQL — `NUMERIC(12,2)` for money, never float |
-| Migrations | Flyway (`classpath:db/migration`, V1–V12 applied, next is V13) |
+| Migrations | Flyway (`classpath:db/migration`, V1–V13 applied, next is V14) |
 | ORM | Spring Data JPA + Hibernate (`ddl-auto: validate` — schema is Flyway-owned, never Hibernate-managed) |
 | Auth | JWT via jjwt 0.12.5 — `userId` + `familyIds` claims, 15-min access token, 7-day refresh via `X-Refresh-Token` header |
 | Tenant population | `JwtAuthenticationFilter` extracts userId/familyIds and calls `TenantContext.setCurrentTenant()`. `TenantContextInterceptor` **clears** TenantContext in `afterCompletion()` — it does not populate it. |
@@ -97,7 +97,7 @@ src/main/java/com/family/finance/
 src/main/resources/
 ├── application.yml        Production config (env vars)
 ├── application-dev.yml    Local dev (localhost postgres, Sentry off)
-└── db/migration/          V1–V12 applied
+└── db/migration/          V1–V13 applied
 
 src/test/java/com/family/finance/
 ├── AuthSmokeTest.java
@@ -106,12 +106,12 @@ src/test/java/com/family/finance/
 
 ---
 
-## 5. Current Phase Status (April 20, 2026)
+## 5. Current Phase Status (April 22, 2026)
 
 | Phase | Status | Remaining |
 |---|---|---|
 | 1 — Foundation | ✅ Complete | Rate limiting (bucket4j) + request size limits still missing |
-| 3 — Sync | ✅ Complete | Mobile integration pending (blocked on mobile Phase 2) |
+| 3 — Sync | ✅ Complete (both sides) | Mobile sync engine live — `syncEngine.ts` + `SyncContext.tsx` shipped |
 | 4 — Family Sharing | ✅ Mostly complete | ❌ Email verification · ❌ Password reset · ❌ Refresh token revocation |
 | 6 — CSV Import | ✅ Mostly complete | ❌ `DELETE /api/users/me` (GDPR) |
 | 8 — Web API | ❌ Not started | Blocked until Phase 7 mobile launch gate is passed |
@@ -165,6 +165,16 @@ chore(deps): add bucket4j for rate limiting
 Breaking changes: append `!` after type/scope and add a `BREAKING CHANGE:` footer.
 
 Full branching and tagging rules: `docs/agents/git-strategy.md`.
+
+---
+
+## Documentation Hierarchy
+
+| Directory | AGENTS.md |
+|-----------|-----------|
+| `src/main/java/com/family/finance/entity/` | `entity/AGENTS.md` — audit pattern (@PreUpdate/version/deletedAt), money fields, soft-delete rules |
+| `src/main/java/com/family/finance/security/` | `security/AGENTS.md` — JWT flow, TenantContext populate vs clear, public routes |
+| `src/main/java/com/family/finance/sync/` | `sync/AGENTS.md` — SyncTableHandler interface, conflict resolution, adding sync tables |
 
 ---
 
