@@ -168,6 +168,7 @@ public class TransactionSyncHandler implements SyncTableHandler {
         m.put("updated_at", t.getUpdatedAt() != null ? t.getUpdatedAt().toEpochMilli() : null);
         m.put("deleted_at", t.getDeletedAt() != null ? t.getDeletedAt().toEpochMilli() : null);
         m.put("version", t.getVersion());
+        m.put("transfer_id", t.getTransferId() != null ? t.getTransferId().toString() : null);
         return m;
     }
 
@@ -196,6 +197,9 @@ public class TransactionSyncHandler implements SyncTableHandler {
             } else {
                 t.setCategory(null);
             }
+        }
+        if (raw.containsKey("transfer_id")) {
+            t.setTransferId(parseUuid(raw.get("transfer_id")));
         }
         t.setUpdatedAt(Instant.now());
     }

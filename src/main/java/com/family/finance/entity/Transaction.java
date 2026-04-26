@@ -56,6 +56,9 @@ public class Transaction {
     @Column(length = 64)
     private String importHash;
 
+    @Column
+    private UUID transferId;
+
     @PreUpdate
     void onUpdate() {
         updatedAt = Instant.now();
