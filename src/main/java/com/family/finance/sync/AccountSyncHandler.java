@@ -120,21 +120,18 @@ public class AccountSyncHandler implements SyncTableHandler {
                                        UUID userId, List<UUID> familyIds) {
         List<Account> modified = accountRepository.findModifiedForSync(since, until, familyIds, userId);
 
-        List<Map<String, Object>> created = new ArrayList<>();
         List<Map<String, Object>> updated = new ArrayList<>();
         List<String> deleted = new ArrayList<>();
 
         for (Account a : modified) {
             if (a.getDeletedAt() != null && !a.getDeletedAt().isBefore(since)) {
                 deleted.add(a.getId().toString());
-            } else if (a.getCreatedAt().isAfter(since)) {
-                created.add(toWireFormat(a));
             } else {
                 updated.add(toWireFormat(a));
             }
         }
 
-        return new SyncTableChanges(created, updated, deleted);
+        return new SyncTableChanges(List.of(), updated, deleted);
     }
 
     @Override

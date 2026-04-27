@@ -114,21 +114,18 @@ public class CategorySyncHandler implements SyncTableHandler {
     public SyncTableChanges buildPull(Instant since, Instant until, UUID userId, List<UUID> familyIds) {
         List<Category> modified = categoryRepository.findModifiedForSync(since, until, familyIds, userId);
 
-        List<Map<String, Object>> created = new ArrayList<>();
         List<Map<String, Object>> updated = new ArrayList<>();
         List<String> deleted = new ArrayList<>();
 
         for (Category c : modified) {
             if (c.getDeletedAt() != null && !c.getDeletedAt().isBefore(since)) {
                 deleted.add(c.getId().toString());
-            } else if (c.getCreatedAt().isAfter(since)) {
-                created.add(toWireFormat(c));
             } else {
                 updated.add(toWireFormat(c));
             }
         }
 
-        return new SyncTableChanges(created, updated, deleted);
+        return new SyncTableChanges(List.of(), updated, deleted);
     }
 
     @Override

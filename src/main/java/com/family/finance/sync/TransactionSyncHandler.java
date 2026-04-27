@@ -136,21 +136,18 @@ public class TransactionSyncHandler implements SyncTableHandler {
     public SyncTableChanges buildPull(Instant since, Instant until, UUID userId, List<UUID> familyIds) {
         List<Transaction> modified = transactionRepository.findModifiedForSync(since, until, familyIds, userId);
 
-        List<Map<String, Object>> created = new ArrayList<>();
         List<Map<String, Object>> updated = new ArrayList<>();
         List<String> deleted = new ArrayList<>();
 
         for (Transaction t : modified) {
             if (t.getDeletedAt() != null && !t.getDeletedAt().isBefore(since)) {
                 deleted.add(t.getId().toString());
-            } else if (t.getCreatedAt().isAfter(since)) {
-                created.add(toWireFormat(t));
             } else {
                 updated.add(toWireFormat(t));
             }
         }
 
-        return new SyncTableChanges(created, updated, deleted);
+        return new SyncTableChanges(List.of(), updated, deleted);
     }
 
     @Override

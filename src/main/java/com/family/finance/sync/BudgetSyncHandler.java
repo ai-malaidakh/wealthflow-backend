@@ -138,21 +138,18 @@ public class BudgetSyncHandler implements SyncTableHandler {
 
         List<Budget> modified = budgetRepository.findModifiedForSync(since, until, familyIds);
 
-        List<Map<String, Object>> created = new ArrayList<>();
         List<Map<String, Object>> updated = new ArrayList<>();
         List<String> deleted = new ArrayList<>();
 
         for (Budget b : modified) {
             if (b.getDeletedAt() != null && !b.getDeletedAt().isBefore(since)) {
                 deleted.add(b.getId().toString());
-            } else if (b.getCreatedAt().isAfter(since)) {
-                created.add(toWireFormat(b));
             } else {
                 updated.add(toWireFormat(b));
             }
         }
 
-        return new SyncTableChanges(created, updated, deleted);
+        return new SyncTableChanges(List.of(), updated, deleted);
     }
 
     @Override
