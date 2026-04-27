@@ -24,7 +24,11 @@ Every record in `created` / `updated` arrays uses **snake_case** keys matching W
 
 **Money fields:** Backend stores `NUMERIC(12,2)`, serializes as decimal string (e.g. `"balance": "1234.56"`). WatermelonDB stores integer cents. **The multiply/divide-by-100 conversion lives on the mobile side only** — the backend does not convert.
 
-**Timestamp fields:** Serialized as epoch milliseconds (long integers).
+**Timestamp fields:** Serialized as epoch milliseconds (long integers). This applies to `created_at`, `updated_at`, and `deleted_at` only.
+
+**Date fields (transactions):** The `date` field is a calendar date (`LocalDate`), NOT a timestamp. It must be serialized as an **ISO-8601 string** (`"2026-04-26"`), never as epoch milliseconds. WatermelonDB's schema defines `date` as `type: 'string'`; sending a Long causes WatermelonDB to throw a type-validation error in dev builds, breaking the entire sync pull silently. See `TransactionSyncHandler.toWireFormat()` — uses `t.getDate().toString()`.
+
+> **Trap to avoid:** Do not use `.atStartOfDay(UTC).toInstant().toEpochMilli()` for date-only fields. Reserve epoch ms for `Instant` fields (`created_at`, `updated_at`, `deleted_at`).
 
 ## Conflict Detection (Server Wins)
 

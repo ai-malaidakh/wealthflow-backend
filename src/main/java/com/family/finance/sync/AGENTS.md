@@ -32,6 +32,12 @@ void push(SyncTableChanges changes, UUID userId, List<UUID> familyIds);
 
 **Money fields:** All money is `NUMERIC(12,2)` / `BigDecimal` in the DB. The sync handler serialises to/from `String` decimal format (`"19.99"`). The mobile side converts to/from integer cents. Never use `double` or `float`.
 
+**Date vs timestamp serialization — critical distinction:**
+- `Instant` fields (`createdAt`, `updatedAt`, `deletedAt`) → serialize as epoch milliseconds (`instant.toEpochMilli()`)
+- `LocalDate` fields (`date` on transactions) → serialize as **ISO-8601 string** (`localDate.toString()` → `"2026-04-26"`)
+
+WatermelonDB declares `date` as `type: 'string'` in the schema. Sending a Long for a string column causes WatermelonDB to throw during pull application in dev builds, silently aborting the entire sync. Never use `.atStartOfDay(UTC).toInstant().toEpochMilli()` for `LocalDate` fields in `toWireFormat()`.
+
 **Tenant scoping:** Every pull query must filter by `familyIds` and/or `userId` from `TenantContext`. Never return records outside the authenticated tenant's scope.
 
 **Conflict resolution (server wins):**

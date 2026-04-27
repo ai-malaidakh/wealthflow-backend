@@ -38,6 +38,10 @@ public class TransactionSyncHandler implements SyncTableHandler {
 
     @Override
     public void applyPush(SyncTableChanges changes, UUID userId, List<UUID> familyIds) {
+        // Flush any pending writes from earlier handlers (e.g. CategorySyncHandler) so that
+        // the category FK lookups below see the just-saved categories in the same transaction.
+        entityManager.flush();
+
         User user = userRepository.getReferenceById(userId);
 
         for (Map<String, Object> raw : changes.created()) {
@@ -69,8 +73,7 @@ public class TransactionSyncHandler implements SyncTableHandler {
         }
 
         // Account must belong to caller's tenant
-        Optional<Account> account = accountRepository.findByIdAndTenant(
-                accountId, familyIds.isEmpty() ? List.of(UUID.randomUUID()) : familyIds, user.getId());
+        Optional<Account> account = accountRepository.findByIdAndTenant(accountId, familyIds, user.getId());
         if (account.isEmpty()) {
             log.warn("TransactionSyncHandler: create rejected — account {} not in tenant (tx {})", accountId, id);
             return;
@@ -160,10 +163,9 @@ public class TransactionSyncHandler implements SyncTableHandler {
         m.put("amount", t.getAmount() != null ? t.getAmount().toPlainString() : "0.00");
         m.put("currency", t.getCurrency());
         m.put("description", t.getDescription());
-        // date as epoch milliseconds (start of day UTC) for WatermelonDB compatibility
-        m.put("date", t.getDate() != null
-                ? t.getDate().atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli()
-                : null);
+        // date as ISO string (e.g. "2026-04-26") — matches WatermelonDB schema type:'string'
+        // and the format AddTransactionModal writes (todayIso/yesterdayIso).
+        m.put("date", t.getDate() != null ? t.getDate().toString() : null);
         m.put("created_at", t.getCreatedAt() != null ? t.getCreatedAt().toEpochMilli() : null);
         m.put("updated_at", t.getUpdatedAt() != null ? t.getUpdatedAt().toEpochMilli() : null);
         m.put("deleted_at", t.getDeletedAt() != null ? t.getDeletedAt().toEpochMilli() : null);
@@ -193,7 +195,11 @@ public class TransactionSyncHandler implements SyncTableHandler {
             UUID catId = parseUuid(raw.get("category_id"));
             if (catId != null) {
                 categoryRepository.findByIdAndTenant(catId, familyIds, userId)
-                        .ifPresent(t::setCategory);
+                        .ifPresentOrElse(
+                                t::setCategory,
+                                () -> log.warn("TransactionSyncHandler: category {} not found for tx {} — category_id will be null",
+                                        catId, t.getId())
+                        );
             } else {
                 t.setCategory(null);
             }

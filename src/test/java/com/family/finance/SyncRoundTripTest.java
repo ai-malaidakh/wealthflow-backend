@@ -138,6 +138,40 @@ class SyncRoundTripTest {
                 ((Map<String, Object>) pullResponse.get("changes")).get("accounts");
     }
 
+    /** Push changes for the transactions table given a pre-existing account. */
+    private long pushTransactionChanges(String token, long lastPulledAt,
+                                        List<Map<String, Object>> created,
+                                        List<Map<String, Object>> updated,
+                                        List<String> deleted) throws Exception {
+        Map<String, Object> body = Map.of(
+                "lastPulledAt", lastPulledAt,
+                "schemaVersion", 1,
+                "changes", Map.of("transactions", Map.of(
+                        "created", created,
+                        "updated", updated,
+                        "deleted", deleted
+                ))
+        );
+        MvcResult result = mvc.perform(post("/api/sync/push?lastPulledAt=" + lastPulledAt)
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.timestamp").isNumber())
+                .andReturn();
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> response = objectMapper.readValue(
+                result.getResponse().getContentAsString(), Map.class);
+        return ((Number) response.get("timestamp")).longValue();
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> transactionChangesFrom(Map<String, Object> pullResponse) {
+        return (Map<String, Object>)
+                ((Map<String, Object>) pullResponse.get("changes")).get("transactions");
+    }
+
     // -------------------------------------------------------------------------
     // Tests
     // -------------------------------------------------------------------------
@@ -255,6 +289,57 @@ class SyncRoundTripTest {
 
         mvc.perform(get("/api/sync/pull"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    /**
+     * Regression: transaction date must round-trip as ISO string ("2026-04-26"), not epoch ms.
+     *
+     * WatermelonDB schema defines the `date` column as type:'string'. If the backend
+     * sends a Long, WatermelonDB throws a type-validation error in dev mode and the
+     * entire synchronize() call fails — no server data ever appears on device.
+     */
+    @Test
+    void transactionDateRoundTripsAsIsoString() throws Exception {
+        String token = registerAndGetToken("txdate@example.com", "TxDate Family");
+
+        // Push an account first — transactions reference it by account_id
+        String accountId = UUID.randomUUID().toString();
+        long afterAccount = pushAccountChanges(token, 0L,
+                List.of(Map.of("id", accountId, "name", "Checking",
+                        "type", "CHECKING", "balance", "1000.00", "currency", "USD")),
+                List.of(), List.of());
+
+        // Push a transaction with an ISO date string (exactly how the mobile writes it)
+        String txId = UUID.randomUUID().toString();
+        pushTransactionChanges(token, afterAccount,
+                List.of(Map.of(
+                        "id", txId,
+                        "account_id", accountId,
+                        "amount", "50.00",
+                        "currency", "USD",
+                        "date", "2026-04-26",
+                        "version", 0
+                )),
+                List.of(), List.of());
+
+        // Pull from epoch — the transaction must come back with date as a String, not a Long
+        Map<String, Object> pullResponse = pullChanges(token, 0L);
+        Map<String, Object> txChanges = transactionChangesFrom(pullResponse);
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> created = (List<Map<String, Object>>) txChanges.get("created");
+        assertThat(created).isNotEmpty();
+
+        Map<String, Object> pulled = created.stream()
+                .filter(r -> txId.equals(r.get("id")))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Transaction not found in pull created"));
+
+        Object dateValue = pulled.get("date");
+        assertThat(dateValue)
+                .as("date must be a String (ISO-8601), not a Long — WatermelonDB schema is type:'string'")
+                .isInstanceOf(String.class);
+        assertThat((String) dateValue).isEqualTo("2026-04-26");
     }
 
     /**

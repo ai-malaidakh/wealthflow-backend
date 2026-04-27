@@ -49,8 +49,7 @@ public class AccountSyncHandler implements SyncTableHandler {
         if (id == null) return;
 
         // Idempotent: if already exists, treat as update
-        Optional<Account> existing = accountRepository.findByIdAndTenant(
-                id, familyIds.isEmpty() ? List.of(UUID.randomUUID()) : familyIds, user.getId());
+        Optional<Account> existing = accountRepository.findByIdAndTenant(id, familyIds, user.getId());
         if (existing.isPresent()) {
             handleUpdate(raw, user, familyIds);
             return;

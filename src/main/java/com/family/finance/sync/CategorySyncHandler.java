@@ -151,12 +151,13 @@ public class CategorySyncHandler implements SyncTableHandler {
 
     private void applyFields(Category c, Map<String, Object> raw) {
         if (raw.containsKey("name")) c.setName((String) raw.get("name"));
-        if (raw.containsKey("type")) {
+        if (raw.containsKey("type") && raw.get("type") != null) {
             try {
                 c.setType(Category.CategoryType.valueOf(
                         ((String) raw.get("type")).toUpperCase()));
             } catch (IllegalArgumentException e) {
-                c.setType(Category.CategoryType.EXPENSE);
+                log.warn("CategorySyncHandler: unknown type '{}' for category {}, keeping existing",
+                        raw.get("type"), c.getId());
             }
         }
         c.setUpdatedAt(Instant.now());
