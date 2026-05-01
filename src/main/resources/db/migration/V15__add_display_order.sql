@@ -1,0 +1,2 @@
+ALTER TABLE accounts ADD COLUMN display_order INT NOT NULL DEFAULT 0;
+ALTER TABLE categories ADD COLUMN display_order INT NOT NULL DEFAULT 0;
