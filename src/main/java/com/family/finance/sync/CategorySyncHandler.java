@@ -141,6 +141,7 @@ public class CategorySyncHandler implements SyncTableHandler {
         m.put("updated_at", c.getUpdatedAt() != null ? c.getUpdatedAt().toEpochMilli() : null);
         m.put("deleted_at", c.getDeletedAt() != null ? c.getDeletedAt().toEpochMilli() : null);
         m.put("version", c.getVersion());
+        m.put("display_order", c.getDisplayOrder());
         return m;
     }
 
@@ -156,6 +157,10 @@ public class CategorySyncHandler implements SyncTableHandler {
                 log.warn("CategorySyncHandler: unknown type '{}' for category {}, keeping existing",
                         raw.get("type"), c.getId());
             }
+        }
+        if (raw.containsKey("display_order")) {
+            Object order = raw.get("display_order");
+            if (order instanceof Number n) c.setDisplayOrder(n.intValue());
         }
         c.setUpdatedAt(Instant.now());
     }

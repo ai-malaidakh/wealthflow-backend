@@ -58,6 +58,9 @@ public class Account {
     @Column(nullable = false)
     private long version = 0;
 
+    @Column(nullable = false)
+    private int displayOrder = 0;
+
     @PreUpdate
     void onUpdate() {
         updatedAt = Instant.now();

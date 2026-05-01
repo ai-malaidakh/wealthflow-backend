@@ -149,6 +149,7 @@ public class AccountSyncHandler implements SyncTableHandler {
         m.put("updated_at", a.getUpdatedAt() != null ? a.getUpdatedAt().toEpochMilli() : null);
         m.put("deleted_at", a.getDeletedAt() != null ? a.getDeletedAt().toEpochMilli() : null);
         m.put("version", a.getVersion());
+        m.put("display_order", a.getDisplayOrder());
         return m;
     }
 
@@ -174,6 +175,10 @@ public class AccountSyncHandler implements SyncTableHandler {
             }
         }
         if (raw.containsKey("currency")) a.setCurrency((String) raw.get("currency"));
+        if (raw.containsKey("display_order")) {
+            Object order = raw.get("display_order");
+            if (order instanceof Number n) a.setDisplayOrder(n.intValue());
+        }
         a.setUpdatedAt(Instant.now());
     }
 
