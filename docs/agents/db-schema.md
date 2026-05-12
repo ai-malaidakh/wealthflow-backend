@@ -11,9 +11,9 @@
 - Tenant ownership on `accounts` and `categories`: exactly one of `family_id` or `user_id` is non-null, enforced by a DB CHECK constraint.
 - `@PreUpdate` on every entity auto-increments `version` and sets `updatedAt`. Every new entity must have this hook — sync conflict detection depends on it.
 
-## Applied Migrations (V1–V12)
+## Applied Migrations (V1–V15)
 
-**Next migration number: `V13__...`**
+**Next migration number: `V16__...`**
 
 | Version | File | What it does |
 |---|---|---|
@@ -29,3 +29,6 @@
 | V10 | `V10__add_family_members_audit_columns.sql` | Audit columns on `family_members` |
 | V11 | `V11__add_import_hash_to_transactions.sql` | `import_hash` on `transactions` (SHA-256 dedup for CSV import) |
 | V12 | `V12__create_family_invites.sql` | `family_invites` — code VARCHAR(12), expires_at, used_at, used_by |
+| V13 | `V13__fix_import_hash_column_type.sql` | Fix `import_hash` column type |
+| V14 | `V14__add_transfer_id_to_transactions.sql` | `transfer_id` on `transactions` (links paired transfer records) |
+| V15 | `V15__add_display_order.sql` | `display_order` on `accounts` and `categories` |

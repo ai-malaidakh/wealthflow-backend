@@ -48,12 +48,12 @@ protected void onUpdate() {
 
 **`FamilyInvite` and `SyncConflict` are server-side only** — not in the WatermelonDB mobile schema. Do not add them to `src/database/schema.ts` in the frontend.
 
-**Schema is Flyway-owned.** After changing an entity, write a new migration `V{next}__describe_change.sql`. Current applied: V1–V13; next is `V14`.
+**Schema is Flyway-owned.** After changing an entity, write a new migration `V{next}__describe_change.sql`. Current applied: V1–V15; next is `V16`.
 
 ### Adding a New Entity
 1. Read `docs/agents/authoring-rules.md`
 2. Create entity with full audit pattern
-3. Create Flyway migration `V14__...`
+3. Create Flyway migration `V16__...`
 4. Create repository with tenant-scoped queries
 5. Create `SyncTableHandler` if the entity is syncable
 6. Update `packages/types/index.ts` if the entity has an API response shape
